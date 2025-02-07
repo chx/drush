@@ -9,6 +9,7 @@ use Drupal\Component\Render\MarkupInterface;
 use Drupal\Core\Config\ConfigBase;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\EntityTypeRepositoryInterface;
 use Drupal\Core\Field\FieldItemInterface;
@@ -36,7 +37,8 @@ final class CliCommands extends DrushCommands
 
     public function __construct(
         protected EntityTypeManagerInterface $entityTypeManager,
-        protected EntityTypeRepositoryInterface $entityTypeRepository        
+        protected EntityTypeRepositoryInterface $entityTypeRepository,
+        protected EntityTypeBundleInfoInterface $entityTypeBundleInfo
     ) {
         parent::__construct();
     }
@@ -316,18 +318,30 @@ final class CliCommands extends DrushCommands
         $classNameEntityTypeMapReflection = (new \ReflectionObject($this->entityTypeRepository))->getProperty('classNameEntityTypeMap');
         $classNameEntityTypeMap = $classNameEntityTypeMapReflection->getValue($this->entityTypeRepository);
         foreach ($this->entityTypeManager->getDefinitions() as $entityTypeId => $definition) {
-            $class = $definition->getClass();
-            $reflectionClass = new \ReflectionClass($class);
-            $parts = explode('\\', $class);
-            $end = end($parts);
-            // https://github.com/drush-ops/drush/pull/5729, https://github.com/drush-ops/drush/issues/5730
-            // and https://github.com/drush-ops/drush/issues/5899.
-            if ($reflectionClass->isFinal() || $reflectionClass->isAbstract() || class_exists($end)) {
-                continue;
+            $classNameEntityTypeMap = $this->createShortClassForEntityClass($definition->getClass(), $entityTypeId, $classNameEntityTypeMap);
+            foreach ($this->entityTypeBundleInfo->getAllBundleInfo() as $bundles) {
+                foreach ($bundles as $info) {
+                    if (isset($info['class'])) {
+                        $classNameEntityTypeMap = $this->createShortClassForEntityClass($info['class'], $entityTypeId, $classNameEntityTypeMap);
+                    }
+                }
             }
-            $classNameEntityTypeMap[$end] = $entityTypeId;
-            // Make it possible to easily load revisions.
-            eval(sprintf('class %s extends %s {
+        }
+        $classNameEntityTypeMapReflection->setValue($this->entityTypeRepository, $classNameEntityTypeMap);
+    }
+
+    public function createShortClassForEntityClass(string $class, string $entityTypeId, array $classNameEntityTypeMap): array {
+        $reflectionClass = new \ReflectionClass($class);
+        $parts = explode('\\', $class);
+        $end = end($parts);
+        // https://github.com/drush-ops/drush/pull/5729, https://github.com/drush-ops/drush/issues/5730
+        // and https://github.com/drush-ops/drush/issues/5899.
+        if ($reflectionClass->isFinal() || $reflectionClass->isAbstract() || class_exists($end)) {
+            return $classNameEntityTypeMap;
+        }
+        $classNameEntityTypeMap[$end] = $entityTypeId;
+        // Make it possible to easily load revisions.
+        eval(sprintf('class %s extends %s {
                 public static function loadRevision($id) {
                     $entity_type_repository = \Drupal::service("entity_type.repository");
                     $entity_type_manager = \Drupal::entityTypeManager();
@@ -335,7 +349,6 @@ final class CliCommands extends DrushCommands
                     return $storage->loadRevision($id);
                 }
             }', $end, $class));
-        }
-        $classNameEntityTypeMapReflection->setValue($this->entityTypeRepository, $classNameEntityTypeMap);
+        return $classNameEntityTypeMap;
     }
 }
