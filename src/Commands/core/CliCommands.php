@@ -63,6 +63,7 @@ final class CliCommands extends DrushCommands
     #[CLI\Option(name: 'cwd', description: 'A directory to change to before launching the shell. Default is the project root directory')]
     #[CLI\Topics(topics: [self::DOCS_REPL])]
     #[CLI\Usage(name: '$node = Node::load(1)', description: 'Entity classes are available without their namespace. For example, Node::load(1) works instead of Drupal\Node\entity\Node::load(1).')]
+    #[CLI\Usage(name: '$node = NodeArticle::load(1)', description: 'Entity bundles classes are also available without their namespace. For example, NodeArticle::load(1) works instead of Drupal\node_article\entity\NodeArticle::load(1).')]
     #[CLI\Usage(name: '$paragraph = Paragraph::loadRevision(1)', description: 'Also, a loadRevision static method is made available for easier load of revisions.')]
     #[CLI\Bootstrap(level: DrupalBootLevels::FULL)]
     public function cli(array $options = ['version-history' => false, 'cwd' => self::REQ]): void
