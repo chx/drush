@@ -311,6 +311,8 @@ final class CliCommands extends DrushCommands
 
     public function makeEntitiesAvailableWithShortClassNames(): void
     {
+        // The entity type repository stores a map from class name to entity
+        // type id, sneak our short classes in there.
         $classNameEntityTypeMapReflection = (new \ReflectionObject($this->entityTypeRepository))->getProperty('classNameEntityTypeMap');
         $classNameEntityTypeMap = $classNameEntityTypeMapReflection->getValue($this->entityTypeRepository);
         foreach ($this->entityTypeManager->getDefinitions() as $entityTypeId => $definition) {
