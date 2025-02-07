@@ -331,7 +331,8 @@ final class CliCommands extends DrushCommands
         $classNameEntityTypeMapReflection->setValue($this->entityTypeRepository, $classNameEntityTypeMap);
     }
 
-    public function createShortClassForEntityClass(string $class, string $entityTypeId, array $classNameEntityTypeMap): array {
+    public function createShortClassForEntityClass(string $class, string $entityTypeId, array $classNameEntityTypeMap): array
+    {
         $reflectionClass = new \ReflectionClass($class);
         $parts = explode('\\', $class);
         $end = end($parts);
