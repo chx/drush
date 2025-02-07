@@ -309,7 +309,9 @@ final class CliCommands extends DrushCommands
 
     public function makeEntitiesAvailableWithShortClassNames(): void
     {
-        foreach ($this->entityTypeManager->getDefinitions() as $definition) {
+        $classNameEntityTypeMapReflection = (new \ReflectionObject($this->entityTypeRepository))->getProperty('classNameEntityTypeMap');
+        $classNameEntityTypeMap = $classNameEntityTypeMapReflection->getValue($this->entityTypeRepository);
+        foreach ($this->entityTypeManager->getDefinitions() as $entityTypeId => $definition) {
             $class = $definition->getClass();
             $reflectionClass = new \ReflectionClass($class);
             $parts = explode('\\', $class);
@@ -319,6 +321,7 @@ final class CliCommands extends DrushCommands
             if ($reflectionClass->isFinal() || $reflectionClass->isAbstract() || class_exists($end)) {
                 continue;
             }
+            $classNameEntityTypeMap[$end] = $entityTypeId;
             // Make it possible to easily load revisions.
             eval(sprintf('class %s extends %s {
                 public static function loadRevision($id) {
@@ -329,5 +332,6 @@ final class CliCommands extends DrushCommands
                 }
             }', $end, $class));
         }
+        $classNameEntityTypeMapReflection->setValue($this->entityTypeRepository, $classNameEntityTypeMap);
     }
 }
