@@ -10,6 +10,7 @@ use Drupal\Core\Config\ConfigBase;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Entity\EntityTypeRepositoryInterface;
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drush\Attributes as CLI;
@@ -34,7 +35,8 @@ final class CliCommands extends DrushCommands
     const PHP = 'php:cli';
 
     public function __construct(
-        protected EntityTypeManagerInterface $entityTypeManager
+        protected EntityTypeManagerInterface $entityTypeManager,
+        protected EntityTypeRepositoryInterface $entityTypeRepository        
     ) {
         parent::__construct();
     }
